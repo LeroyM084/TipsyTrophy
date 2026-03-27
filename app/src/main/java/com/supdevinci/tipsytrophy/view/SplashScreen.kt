@@ -1,16 +1,14 @@
 package com.supdevinci.tipsytrophy.view
 
+import androidx.compose.animation.*
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -19,25 +17,49 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun SplashScreen(navController: NavHostController) {
-    val durationMillis = (3000..60000).random()
-    println(durationMillis)
+    // Durée aléatoire (restreinte ici à un range raisonnable pour l'expérience utilisateur)
+    val durationMillis = remember { (7000..60000).random() }
     val colorScheme = MaterialTheme.colorScheme
 
-    // Animation de la barre de 0f à 1f
+    // Animation de la barre
     val progress = remember { Animatable(0f) }
 
+    // Gestion des textes qui défilent
+    val loadingTexts = listOf(
+        "A la recherche du daron d'Anthony...",
+        "'Hmmm des donuts' - Thomas",
+        "Ilona elle est grave mature pour son âge...",
+        "Calvitie de Théo : prête",
+        "L'app fait 3Go à cause d'une photo de Manu",
+        "'xDD *insert random gif*' - Crash Bandicoot",
+        "Le saviez-vous : la capacité à tenir l'alcool réside dans le nombre de cheuveux de la personne",
+        "'Are u a boy or a girl' - Elowan & Anthony, Juin 2026, Bali"
+    )
+    var currentTextIndex by remember { mutableIntStateOf(0) }
+
     LaunchedEffect(Unit) {
-        // On lance l'animation de la barre sur 3 secondes
-        progress.animateTo(
-            targetValue = 1f,
-            animationSpec = tween(durationMillis)
-        )
-        // Une fois fini, on redirige
-        navController.navigate("login") {
-            popUpTo("splash") { inclusive = true }
+        // Lancement de l'animation de progression
+        launch {
+            progress.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis)
+            )
+            // Une fois fini, on redirige
+            navController.navigate("login") {
+                popUpTo("splash") { inclusive = true }
+            }
+        }
+
+        // Boucle pour faire défiler les textes
+        launch {
+            while (progress.value < 1f) {
+                delay(1500) // Change de texte toutes les 1.5s
+                currentTextIndex = (currentTextIndex + 1) % loadingTexts.size
+            }
         }
     }
 
@@ -55,7 +77,6 @@ fun SplashScreen(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // --- LOGO (Repris de LoginPage) ---
             Icon(
                 imageVector = Icons.Default.EmojiEvents,
                 contentDescription = "Logo",
@@ -76,9 +97,8 @@ fun SplashScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // --- BARRE DE CHARGEMENT ---
             Column(
-                modifier = Modifier.width(200.dp),
+                modifier = Modifier.width(250.dp), // Un peu plus large pour les textes longs
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 LinearProgressIndicator(
@@ -91,13 +111,25 @@ fun SplashScreen(navController: NavHostController) {
                     strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = "Préparation de la soirée...",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = colorScheme.onBackground.copy(alpha = 0.5f)
-                )
+                // Animation de transition fluide entre les textes
+                AnimatedContent(
+                    targetState = loadingTexts[currentTextIndex],
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(1000)) togetherWith
+                                fadeOut(animationSpec = tween(500))
+                    },
+                    label = "TextAnimation"
+                ) { targetText ->
+                    Text(
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        text = targetText,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colorScheme.onBackground.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }

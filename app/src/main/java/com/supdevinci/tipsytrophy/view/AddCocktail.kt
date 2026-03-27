@@ -3,6 +3,8 @@ package com.supdevinci.tipsytrophy.view
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -25,7 +27,8 @@ import com.supdevinci.tipsytrophy.viewModel.CoktailViewModel
 fun AddCocktail(viewModel: CoktailViewModel = viewModel()) {
     var searchQuery by remember { mutableStateOf("") }
 
-    val resultName by viewModel.cocktailName
+    val resultMessage by viewModel.cocktailName
+    val drinks = viewModel.foundCoktail
     val alcoholLevel = viewModel.totalAlcoholLevel
 
     val colorScheme = MaterialTheme.colorScheme
@@ -48,9 +51,8 @@ fun AddCocktail(viewModel: CoktailViewModel = viewModel()) {
                 .padding(horizontal = 32.dp)
                 .systemBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
-
 
             Spacer(modifier = Modifier.height(48.dp))
 
@@ -105,69 +107,76 @@ fun AddCocktail(viewModel: CoktailViewModel = viewModel()) {
                 )
             }
 
-            // --- CARTE RÉSULTAT ---
-            if (resultName.isNotBlank()) {
-                Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    color = colorScheme.surface.copy(alpha = 0.6f),
-                    border = BorderStroke(1.dp, colorScheme.primary.copy(alpha = 0.3f))
+            // --- LISTE DES RÉSULTATS ---
+            if (!drinks.isNullOrEmpty()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(20.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(1f)
+                    items(drinks) { drink ->
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(20.dp),
+                            color = colorScheme.surface.copy(alpha = 0.6f),
+                            border = BorderStroke(1.dp, colorScheme.primary.copy(alpha = 0.3f))
                         ) {
-                            Text(
-                                text = resultName,
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = colorScheme.onSurface
-                                )
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            if (alcoholLevel > 0) {
-                                Text(
-                                    text = "Taux d'alcool moyen : $alcoholLevel%",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = colorScheme.primary
-                                )
-                            } else {
-                                Text(
-                                    text = "Cocktail sans alcool",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = colorScheme.onSurface.copy(alpha = 0.6f)
-                                )
+                            Row(
+                                modifier = Modifier.padding(20.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(
+                                        text = drink.name,
+                                        style = MaterialTheme.typography.titleLarge.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = colorScheme.onSurface
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = drink.alcoholicType ?: "Cocktail",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = colorScheme.onSurface.copy(alpha = 0.6f)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Button(
+                                    onClick = {
+                                        viewModel.addDrinkToLogs(drink)
+                                    },
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = colorScheme.primary,
+                                        contentColor = colorScheme.onPrimary
+                                    ),
+                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
+                                    contentPadding = PaddingValues(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = "Ajouter un cocktail",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
                             }
-                        }
-
-                        Spacer(modifier = Modifier.width(12.dp))
-
-                        Button(
-                            onClick = {
-                                viewModel.addDrinkToLogs(viewModel.foundCoktail!!)
-                                println("Button clicked")
-                            },
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colorScheme.primary,
-                                contentColor = colorScheme.onPrimary
-                            ),
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
-                            contentPadding = PaddingValues(12.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Ajouter un cocktail",
-                                modifier = Modifier.size(24.dp)
-                            )
                         }
                     }
                 }
+            } else if (resultMessage.isNotBlank()) {
+                Text(
+                    text = resultMessage,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = colorScheme.onSurface.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 40.dp)
+                )
             }
         }
     }

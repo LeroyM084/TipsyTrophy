@@ -28,11 +28,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.supdevinci.tipsytrophy.data.SessionManager
 import com.supdevinci.tipsytrophy.viewModel.LeaderBoardViewModel
-// ... tes autres imports
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material.icons.filled.Check
 import kotlinx.coroutines.launch
@@ -42,8 +40,9 @@ fun ProfilePage(navController : NavHostController, viewmodel : LeaderBoardViewMo
     val currentUser = SessionManager.currentUser
     val colorScheme = MaterialTheme.colorScheme
     var friendUsername by remember { mutableStateOf("") }
+    var isFriendError by remember { mutableStateOf(false) }
 
-    // 1. Création du scope pour l'appel suspend
+
     val scope = rememberCoroutineScope()
 
     Box(
@@ -65,7 +64,6 @@ fun ProfilePage(navController : NavHostController, viewmodel : LeaderBoardViewMo
         ) {
             Spacer(modifier = Modifier.height(40.dp))
 
-            // --- AVATAR / TROPHÉE ---
             Surface(
                 modifier = Modifier.size(120.dp),
                 shape = CircleShape,
@@ -100,7 +98,6 @@ fun ProfilePage(navController : NavHostController, viewmodel : LeaderBoardViewMo
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // --- CARTE DES INFOS ---
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -128,9 +125,8 @@ fun ProfilePage(navController : NavHostController, viewmodel : LeaderBoardViewMo
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp)) // Remplacement du weight(1f) car on est dans un scroll
+            Spacer(modifier = Modifier.height(32.dp))
 
-            // --- SECTION AJOUT D'AMI ---
             Text(
                 text = "AJOUTER UN AMI",
                 style = MaterialTheme.typography.labelLarge.copy(
@@ -165,15 +161,16 @@ fun ProfilePage(navController : NavHostController, viewmodel : LeaderBoardViewMo
                     )
                 )
 
-                // 2. Bouton d'action avec gestion de la coroutine
                 Button(
                     onClick = {
                         scope.launch {
                             try {
-                                viewmodel.addFriend(friendUsername = friendUsername)
+                                var status : String = viewmodel.addFriend(friendUsername = friendUsername)
+                                if ( status == "ERROR") {
+                                    isFriendError = true
+                                }
                                 friendUsername = ""
                             } catch (e: Exception) {
-                                // Gérer l'erreur si besoin
                             }
                         }
                     },
@@ -189,9 +186,14 @@ fun ProfilePage(navController : NavHostController, viewmodel : LeaderBoardViewMo
                 }
             }
 
+            if(isFriendError) {
+                Text(
+                    text = "L'utilisateur n'existe pas"
+                )
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
 
-            // --- BOUTON DÉCONNEXION ---
             Button(
                 onClick = {
                     SessionManager.logout()
@@ -224,7 +226,6 @@ fun ProfileInfoRow(icon: ImageVector, label: String, value: String) {
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 1. L'icône à gauche (Badge, Transgender ou MonitorWeight)
         Icon(
             imageVector = icon,
             contentDescription = null,
@@ -234,11 +235,8 @@ fun ProfileInfoRow(icon: ImageVector, label: String, value: String) {
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // 2. La colonne de texte à droite
         Column {
-            // Le petit titre (ex: "Pseudo") en gris transparent
             Text(label, style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.5f))
-            // La valeur réelle (ex: "Jean_Dujardin") en blanc gras
             Text(value, style = MaterialTheme.typography.bodyLarge, color = Color.White, fontWeight = FontWeight.Medium)
         }
     }

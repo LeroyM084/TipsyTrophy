@@ -57,13 +57,13 @@ class LeaderBoardViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    suspend fun addFriend(friendUsername: String) {
-        val currentUserId = currentUser?.id ?: return
+    suspend fun addFriend(friendUsername: String) : String {
+        val currentUserId = currentUser?.id ?: return "ERROR"
 
         val friendUser = database.usersDao().getUserByName(friendUsername)
         if (friendUser == null) {
             Log.e("DatabaseError", "Utilisateur non trouvé : $friendUsername")
-            return
+            return "ERROR"
         }
 
         val relation = Friends(id = 0, firstPersonId = currentUserId, secondPersonId = friendUser.id)
@@ -76,5 +76,6 @@ class LeaderBoardViewModel(application: Application) : AndroidViewModel(applicat
                 Log.e("DatabaseError", "Erreur lors de l'ajout de l'ami : ${e.message}")
             }
         }
+        return "OK"
     }
 }

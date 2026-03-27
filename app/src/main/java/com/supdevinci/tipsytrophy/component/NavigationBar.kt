@@ -35,7 +35,7 @@ fun NavigationBar(navController: NavHostController) {
         BottomNavItem("Profil", Icons.Default.AccountCircle, Routes.PROFILE),
     )
 
-    if (currentRoute == Routes.LOGIN || currentRoute == Routes.SIGNUP) {
+    if (currentRoute == Routes.LOGIN || currentRoute == Routes.SIGNUP || currentRoute == Routes.SPLASH) {
         return
     }
 

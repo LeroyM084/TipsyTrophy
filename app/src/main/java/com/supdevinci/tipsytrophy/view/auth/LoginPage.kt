@@ -24,6 +24,7 @@ import com.supdevinci.tipsytrophy.viewModel.LoginViewModel
 fun LoginPage(viewModel: LoginViewModel = viewModel(), navController: NavHostController) {
     var username by remember { mutableStateOf("") }
     val colorScheme = MaterialTheme.colorScheme
+    var isError by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -75,7 +76,7 @@ fun LoginPage(viewModel: LoginViewModel = viewModel(), navController: NavHostCon
             )
 
             Text(
-                text = "L'app qui garde un œil sur votre soirée",
+                text = "Qui sera aussi alcoolique que mon père ?",
                 style = MaterialTheme.typography.bodyMedium,
                 color = colorScheme.onBackground.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center
@@ -86,7 +87,10 @@ fun LoginPage(viewModel: LoginViewModel = viewModel(), navController: NavHostCon
             // --- FORMULAIRE ---
             OutlinedTextField(
                 value = username,
-                onValueChange = { username = it },
+                onValueChange = {
+                    username = it      // Première instruction
+                    isError = false    // Deuxième instruction
+                },
                 label = { Text("Pseudo") },
                 placeholder = { Text("Ex: Jean_Dujardin") },
                 leadingIcon = {
@@ -113,7 +117,11 @@ fun LoginPage(viewModel: LoginViewModel = viewModel(), navController: NavHostCon
             Button(
                 onClick = {
                     viewModel.loginUser(username) { success ->
-                        if (success) navController.navigate("profile")
+                        if (success) {
+                            navController.navigate("profile")
+                        } else {
+                            isError = true
+                        }
                     }
                 },
                 modifier = Modifier
@@ -136,6 +144,10 @@ fun LoginPage(viewModel: LoginViewModel = viewModel(), navController: NavHostCon
                         letterSpacing = 1.25.sp
                     )
                 )
+            }
+
+            if(isError){
+                Text("Utilisateur introuvable")
             }
 
             Spacer(modifier = Modifier.height(16.dp))

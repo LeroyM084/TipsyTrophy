@@ -2,52 +2,57 @@ package com.supdevinci.tipsytrophy.viewModel
 
 import android.app.Application
 import android.util.Log
-import com.supdevinci.tipsytrophy.data.RetrofitInstance
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.supdevinci.tipsytrophy.data.RetrofitInstance
 import com.supdevinci.tipsytrophy.data.SessionManager
 import com.supdevinci.tipsytrophy.data.SessionManager.currentUser
-import com.supdevinci.tipsytrophy.data.local.entities.DrinkLogs
-import com.supdevinci.tipsytrophy.model.Drink
-import kotlinx.coroutines.launch
-import java.util.Date
-import com.supdevinci.tipsytrophy.data.local.dao.DrinkLogsDao
-import kotlinx.coroutines.Dispatchers
 import com.supdevinci.tipsytrophy.data.local.CocktailDatabase
+import com.supdevinci.tipsytrophy.data.local.entities.DrinkLogs
 import com.supdevinci.tipsytrophy.data.local.entities.Users
+import com.supdevinci.tipsytrophy.model.Drink
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Date
 
-class CoktailViewModel(application : Application) : AndroidViewModel(application){
+class CoktailViewModel(application: Application) : AndroidViewModel(application) {
+
+    // UI State
     var cocktailName = mutableStateOf("Recherchez un cocktail...")
-    var foundCoktail by mutableStateOf<Drink?>(null)
+    var foundCoktail by mutableStateOf<List<Drink>?>(null)
     var totalAlcoholLevel by mutableIntStateOf(-1)
     var isLoadingAlcohol by mutableStateOf(false)
-    var database = CocktailDatabase.getDatabase(application)
     var userLogs by mutableStateOf<List<DrinkLogs>>(emptyList())
-    var user : Users? = SessionManager.currentUser
-    var userId = user?.id ?: 0
-    var userWeight = user?.weight ?: 75
-    var userSex = user?.sex ?: "M"
-    var currentAlcoholLevel by mutableStateOf(0.0)
-    var drinkVolume : Double = 0.0
+    var currentAlcoholLevel by mutableDoubleStateOf(0.0)
 
+    // Database & Session
+    private val database = CocktailDatabase.getDatabase(application)
+    private val user: Users? = SessionManager.currentUser
+    private val userId = user?.id ?: 0
+    private val userWeight = user?.weight ?: 75
+    private val userSex = user?.sex ?: "M"
 
+    // Temporaire pour le calcul en cours
+    private var drinkVolume: Double = 0.0
 
+    /**
+     * Recherche un cocktail par nom via l'API
+     */
     fun searchCoktailByName(text: String) {
         viewModelScope.launch {
             try {
                 val response = RetrofitInstance.api.getCoktailDetail(text)
                 if (response.isSuccessful) {
-                    val drinkObj = response.body()?.drinks?.firstOrNull()
-                    if (drinkObj != null) {
-                        foundCoktail = drinkObj
-                        cocktailName.value = drinkObj.name
-                        calculateGlobalAlcohol(drinkObj)
+                    val drinks = response.body()?.drinks
+                    if (!drinks.isNullOrEmpty()) {
+                        foundCoktail = drinks
+                        cocktailName.value = ""
                     } else {
                         foundCoktail = null
                         cocktailName.value = "Aucun cocktail trouvé"
@@ -60,58 +65,73 @@ class CoktailViewModel(application : Application) : AndroidViewModel(application
         }
     }
 
-    fun calculateGlobalAlcohol(drink: Drink) : Int {
-        viewModelScope.launch {
-            isLoadingAlcohol = true
+    /**
+     * Calcule le taux d'alcool (ABV) d'un cocktail en interrogeant les ingrédients.
+     * Cette fonction est "suspend" pour garantir que le calcul est fini avant la suite.
+     */
+    suspend fun calculateGlobalAlcohol(drink: Drink): Int {
+        isLoadingAlcohol = true
+        val formattedIngredients = drink.getFormattedIngredients()
 
-            val formattedIngredients = drink.getFormattedIngredients()
+        var totalVolMl = 0.0
+        var totalPureAlcMl = 0.0
 
-            var totalVolumeMl = 0.0
-            var totalPureAlcoholMl = 0.0
+        for ((name, measure) in formattedIngredients) {
+            try {
+                val response = RetrofitInstance.api.getIngredientDetail(name)
+                if (response.isSuccessful) {
+                    val ingredient = response.body()?.ingredients?.firstOrNull()
+                    val abv = (ingredient?.abv ?: 0).toDouble()
+                    val volumeMl = drink.parseMeasureToMl(measure)
 
-            for ((name, measure) in formattedIngredients) {
-                try {
-                    val response = RetrofitInstance.api.getIngredientDetail(name)
-                    if (response.isSuccessful) {
-                        val ingredient = response.body()?.ingredients?.firstOrNull()
-                        val abv = (ingredient?.abv ?: 0).toDouble()
-
-                        val volumeMl = drink.parseMeasureToMl(measure)
-
-                        totalVolumeMl += volumeMl
-                        totalPureAlcoholMl += (volumeMl * abv / 100.0)
-                    }
-                } catch (e: Exception) {
-                    totalVolumeMl += drink.parseMeasureToMl(measure)
+                    totalVolMl += volumeMl
+                    totalPureAlcMl += (volumeMl * abv / 100.0)
                 }
+            } catch (e: Exception) {
+                totalVolMl += drink.parseMeasureToMl(measure)
             }
-
-            totalAlcoholLevel = if (totalVolumeMl > 0) {
-                ((totalPureAlcoholMl / totalVolumeMl) * 100.0).toInt()
-            } else {
-                0
-            }
-            drinkVolume = totalVolumeMl
         }
-        return 0
+
+        val finalAbv = if (totalVolMl > 0) {
+            ((totalPureAlcMl / totalVolMl) * 100.0).toInt()
+        } else {
+            0
+        }
+
+        // Mise à jour de l'état sur le thread principal
+        withContext(Dispatchers.Main) {
+            totalAlcoholLevel = finalAbv
+            drinkVolume = if (totalVolMl > 0) totalVolMl else 150.0
+            isLoadingAlcohol = false
+        }
+
+        return finalAbv
     }
 
-
-
+    /**
+     * Ajoute un verre à l'historique en attendant d'abord le calcul de l'ABV
+     */
     fun addDrinkToLogs(drink: Drink) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                // 1. On attend la fin du calcul (important !)
+                val computedAbv = calculateGlobalAlcohol(drink)
                 val currentUserId = currentUser?.id ?: 0
 
+                // 2. Création du log avec les données fraîches
                 val log = DrinkLogs(
                     userId = currentUserId,
                     label = drink.name,
-                    abv = totalAlcoholLevel,
+                    abv = computedAbv,
                     size = drinkVolume,
                     createdAt = Date()
                 )
 
+                // 3. Insertion en base
                 database.drinkLogsDao().insertDrinkLog(log)
+
+                // 4. Rafraîchir l'affichage
+                loadLogsByUserId()
 
             } catch (e: Exception) {
                 Log.e("DatabaseError", "Erreur lors de l'ajout du log : ${e.message}")
@@ -119,25 +139,33 @@ class CoktailViewModel(application : Application) : AndroidViewModel(application
         }
     }
 
+    /**
+     * Charge les consommations de l'utilisateur
+     */
     fun loadLogsByUserId() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = database.drinkLogsDao().getLogsByUserId(userId)
-
                 withContext(Dispatchers.Main) {
                     userLogs = result
+                    // On recalcule le taux d'alcoolémie dès que les logs changent
+                    calculateCurrentAlcoholLevel()
                 }
             } catch (e: Exception) {
-                Log.e("DB_ERROR", "Erreur lors de la récupération des logs")
+                Log.e("DB_ERROR", "Erreur récupération logs")
             }
         }
     }
 
+    /**
+     * Formule de Widmark pour l'alcoolémie actuelle
+     */
     fun calculateCurrentAlcoholLevel() {
         val currentTime = System.currentTimeMillis()
         val twelveHoursInMs = 12 * 60 * 60 * 1000
         val startTime = currentTime - twelveHoursInMs
 
+        // On ne garde que les consommations des 12 dernières heures
         val recentLogs = userLogs.filter { it.createdAt.time >= startTime }
 
         if (recentLogs.isEmpty()) {
@@ -146,8 +174,8 @@ class CoktailViewModel(application : Application) : AndroidViewModel(application
         }
 
         var totalAlcoholGrams = 0.0
-
         recentLogs.forEach { log ->
+            // Alcool pur (g) = Volume (ml) * (ABV/100) * 0.8 (densité éthanol)
             val grams = log.size * (log.abv.toDouble() / 100.0) * 0.8
             totalAlcoholGrams += grams
         }
@@ -155,17 +183,18 @@ class CoktailViewModel(application : Application) : AndroidViewModel(application
         val weight = userWeight.toDouble()
         if (weight <= 0.0) return
 
+        // Coefficient de diffusion (Widmark)
         val k = if (userSex.contains("F", ignoreCase = true) || userSex.contains("Femme", ignoreCase = true)) 0.6 else 0.7
 
+        // Taux théorique sans élimination
         val rawAlcoholLevel = totalAlcoholGrams / (weight * k)
 
+        // Calcul de l'élimination (environ 0.15 g/L par heure)
         val firstLogTime = recentLogs.minByOrNull { it.createdAt.time }?.createdAt?.time ?: currentTime
         val hoursElapsed = (currentTime - firstLogTime).toDouble() / (1000 * 60 * 60)
-
         val elimination = hoursElapsed * 0.15
 
         val result = rawAlcoholLevel - elimination
-
         currentAlcoholLevel = if (result > 0) result else 0.0
     }
 }
