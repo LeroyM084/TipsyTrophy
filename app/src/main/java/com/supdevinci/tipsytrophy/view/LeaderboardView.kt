@@ -43,7 +43,6 @@ fun LeaderboardView(viewmodel: LeaderBoardViewModel = viewModel()) {
                 .fillMaxSize()
                 .systemBarsPadding()
         ) {
-            // --- HEADER SECTION ---
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
@@ -67,7 +66,6 @@ fun LeaderboardView(viewmodel: LeaderBoardViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- LISTE ---
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(

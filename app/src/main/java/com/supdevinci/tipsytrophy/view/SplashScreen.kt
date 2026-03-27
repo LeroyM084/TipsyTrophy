@@ -21,14 +21,11 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SplashScreen(navController: NavHostController) {
-    // Durée aléatoire (restreinte ici à un range raisonnable pour l'expérience utilisateur)
     val durationMillis = remember { (7000..60000).random() }
     val colorScheme = MaterialTheme.colorScheme
 
-    // Animation de la barre
     val progress = remember { Animatable(0f) }
 
-    // Gestion des textes qui défilent
     val loadingTexts = listOf(
         "A la recherche du daron d'Anthony...",
         "'Hmmm des donuts' - Thomas",
@@ -42,22 +39,19 @@ fun SplashScreen(navController: NavHostController) {
     var currentTextIndex by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
-        // Lancement de l'animation de progression
         launch {
             progress.animateTo(
                 targetValue = 1f,
                 animationSpec = tween(durationMillis)
             )
-            // Une fois fini, on redirige
             navController.navigate("login") {
                 popUpTo("splash") { inclusive = true }
             }
         }
 
-        // Boucle pour faire défiler les textes
         launch {
             while (progress.value < 1f) {
-                delay(1500) // Change de texte toutes les 1.5s
+                delay(1500) 
                 currentTextIndex = (currentTextIndex + 1) % loadingTexts.size
             }
         }
@@ -98,7 +92,7 @@ fun SplashScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(48.dp))
 
             Column(
-                modifier = Modifier.width(250.dp), // Un peu plus large pour les textes longs
+                modifier = Modifier.width(250.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 LinearProgressIndicator(
@@ -113,7 +107,6 @@ fun SplashScreen(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Animation de transition fluide entre les textes
                 AnimatedContent(
                     targetState = loadingTexts[currentTextIndex],
                     transitionSpec = {

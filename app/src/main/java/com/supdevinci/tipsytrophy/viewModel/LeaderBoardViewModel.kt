@@ -16,20 +16,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Calendar
 
-// Correction : Ajout des parenthèses (application) pour appeler le constructeur parent
 class LeaderBoardViewModel(application: Application) : AndroidViewModel(application) {
 
     private val currentUser = SessionManager.currentUser
     private val database = CocktailDatabase.getDatabase(application)
 
-    // Utilisation de variables d'état Compose
     var leaderboardData by mutableStateOf<List<LeaderboardEntry>>(emptyList())
         private set
 
     fun loadLeaderboard() {
         val currentUserId = currentUser?.id ?: return
 
-        // Calcul du lundi 00:00:00
         val calendar = Calendar.getInstance().apply {
             set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
             set(Calendar.HOUR_OF_DAY, 0)
@@ -37,7 +34,6 @@ class LeaderBoardViewModel(application: Application) : AndroidViewModel(applicat
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
 
-            // Sécurité : Si on est dimanche, Calendar peut parfois sauter à la semaine suivante
             if (System.currentTimeMillis() < timeInMillis) {
                 add(Calendar.DAY_OF_YEAR, -7)
             }

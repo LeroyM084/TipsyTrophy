@@ -53,7 +53,6 @@ fun SignUpPage(viewModel: LoginViewModel = viewModel(), navController: NavHostCo
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // --- SECTION LOGO ---
             Surface(
                 modifier = Modifier.size(140.dp),
                 shape = RoundedCornerShape(32.dp),
@@ -91,7 +90,6 @@ fun SignUpPage(viewModel: LoginViewModel = viewModel(), navController: NavHostCo
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // --- FORMULAIRE ---
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
@@ -168,7 +166,6 @@ fun SignUpPage(viewModel: LoginViewModel = viewModel(), navController: NavHostCo
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- BOUTON S'ENREGISTRER ---
             Button(
                 onClick = {
                     val weightInt = weight.toIntOrNull() ?: 0
@@ -200,7 +197,6 @@ fun SignUpPage(viewModel: LoginViewModel = viewModel(), navController: NavHostCo
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- LIEN CONNEXION ---
             TextButton(
                 onClick = { navController.navigate("login") },
                 modifier = Modifier.fillMaxWidth()

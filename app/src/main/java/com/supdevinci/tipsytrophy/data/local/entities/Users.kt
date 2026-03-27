@@ -12,7 +12,6 @@ data class Users(
     var weight : Int,
     val sex : String,
 
-    // timestamp
     val createdAt : Date,
     var updatedAt : Date?,
     var deletedAt : Date?

@@ -24,7 +24,6 @@ data class DrinkLogs(
     val abv: Int,
     val size : Double,
 
-    // timestamps
     val createdAt: Date,
     var updatedAt: Date? = null,
     var deletedAt: Date? = null

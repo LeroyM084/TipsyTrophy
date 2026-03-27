@@ -13,14 +13,13 @@ import java.util.Date
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
-    // val currentUser get() = SessionManager.currentUser
     private val database = CocktailDatabase.getDatabase(application)
 
     fun createUser(username: String, weight: Int, sex: String, onComplete: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val newUser = Users(
-                    id = 0, // Auto-incrément
+                    id = 0, 
                     name = username,
                     weight = weight,
                     sex = sex,
@@ -30,7 +29,6 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 database.usersDao().insertUser(newUser)
                 
-                // After creating, automatically login
                 val user = database.usersDao().getUserByName(username)
                 withContext(Dispatchers.Main) {
                     SessionManager.currentUser = user
@@ -50,7 +48,6 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     user.updatedAt = Date()
                     database.usersDao().updateUser(user)
                     
-                    // Update session if it's the current user
                     if (SessionManager.currentUser?.id == id) {
                         withContext(Dispatchers.Main) {
                             SessionManager.currentUser = user

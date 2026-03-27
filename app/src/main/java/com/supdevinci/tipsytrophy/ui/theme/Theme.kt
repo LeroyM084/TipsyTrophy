@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 
-// Définition de tes couleurs personnalisées (Palette)
 private val DeepRoyalBlue = Color(0xFF001233) // Fond très foncé, tire vers le bleu roi
 private val RichGold = Color(0xFFF6C324)     // Jaune doré éclatant (Trophée)
 private val DarkerGold = Color(0xFFBF9B30)   // Pour les variantes ou états pressés
@@ -21,17 +20,14 @@ private val OnBlueText = Color(0xFFECF0F1)   // Blanc cassé très léger pour l
 private val BlueSurface = Color(0xFF001A4A)  // Un bleu légèrement plus clair pour les cartes/surfaces
 
 val defaultColorScheme = darkColorScheme(
-    // --- COULEUR PRIMAIRE (Le Trophée / L'Or) ---
     primary = RichGold,
     onPrimary = Color.Black,
     primaryContainer = DarkerGold,
     onPrimaryContainer = Color.White,
 
-    // --- COULEUR SECONDAIRE (Accents) ---
     secondary = Color(0xFFFFD700),
     onSecondary = Color.Black,
 
-    // --- FOND ET SURFACES (Le Bleu Roi) ---
     background = DeepRoyalBlue,
     onBackground = OnBlueText,
 
@@ -50,7 +46,6 @@ val defaultColorScheme = darkColorScheme(
 @Composable
 fun TipsyTrophyTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Désactivé par défaut pour forcer ton thème personnalisé (DeepRoyalBlue)
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {

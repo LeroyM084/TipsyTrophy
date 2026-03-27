@@ -32,7 +32,6 @@ fun LeaderboardItem(data: LeaderboardEntry) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // --- POSITION / RANG ---
             Box(
                 modifier = Modifier.width(40.dp),
                 contentAlignment = Alignment.Center
@@ -47,7 +46,6 @@ fun LeaderboardItem(data: LeaderboardEntry) {
                 )
             }
 
-            // --- NOM DE L'UTILISATEUR ---
             Text(
                 text = data.name,
                 modifier = Modifier
@@ -59,7 +57,6 @@ fun LeaderboardItem(data: LeaderboardEntry) {
                 )
             )
 
-            // --- SCORE / DRINK COUNT ---
             Surface(
                 color = colorScheme.primary.copy(alpha = 0.1f),
                 shape = RoundedCornerShape(12.dp),

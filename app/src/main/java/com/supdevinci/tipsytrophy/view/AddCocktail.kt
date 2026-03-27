@@ -56,7 +56,6 @@ fun AddCocktail(viewModel: CoktailViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // --- CHAMP DE RECHERCHE ---
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -82,7 +81,6 @@ fun AddCocktail(viewModel: CoktailViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- BOUTON RECHERCHER ---
             Button(
                 onClick = { viewModel.searchCoktailByName(searchQuery) },
                 modifier = Modifier
@@ -109,7 +107,6 @@ fun AddCocktail(viewModel: CoktailViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- LISTE DES RÉSULTATS ---
             if (!drinks.isNullOrEmpty()) {
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth().weight(1f),

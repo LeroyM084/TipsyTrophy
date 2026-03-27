@@ -23,7 +23,6 @@ import java.util.Date
 
 class CoktailViewModel(application: Application) : AndroidViewModel(application) {
 
-    // UI State
     var cocktailName = mutableStateOf("Recherchez un cocktail...")
     var foundCoktail by mutableStateOf<List<Drink>?>(null)
     var totalAlcoholLevel by mutableIntStateOf(-1)
@@ -31,19 +30,15 @@ class CoktailViewModel(application: Application) : AndroidViewModel(application)
     var userLogs by mutableStateOf<List<DrinkLogs>>(emptyList())
     var currentAlcoholLevel by mutableDoubleStateOf(0.0)
 
-    // Database & Session
     private val database = CocktailDatabase.getDatabase(application)
     private val user: Users? = SessionManager.currentUser
     private val userId = user?.id ?: 0
     private val userWeight = user?.weight ?: 75
     private val userSex = user?.sex ?: "M"
 
-    // Temporaire pour le calcul en cours
     private var drinkVolume: Double = 0.0
 
-    /**
-     * Recherche un cocktail par nom via l'API
-     */
+  
     fun searchCoktailByName(text: String) {
         viewModelScope.launch {
             try {
@@ -65,10 +60,6 @@ class CoktailViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    /**
-     * Calcule le taux d'alcool (ABV) d'un cocktail en interrogeant les ingrédients.
-     * Cette fonction est "suspend" pour garantir que le calcul est fini avant la suite.
-     */
     suspend fun calculateGlobalAlcohol(drink: Drink): Int {
         isLoadingAlcohol = true
         val formattedIngredients = drink.getFormattedIngredients()
@@ -98,7 +89,6 @@ class CoktailViewModel(application: Application) : AndroidViewModel(application)
             0
         }
 
-        // Mise à jour de l'état sur le thread principal
         withContext(Dispatchers.Main) {
             totalAlcoholLevel = finalAbv
             drinkVolume = if (totalVolMl > 0) totalVolMl else 150.0
@@ -108,17 +98,12 @@ class CoktailViewModel(application: Application) : AndroidViewModel(application)
         return finalAbv
     }
 
-    /**
-     * Ajoute un verre à l'historique en attendant d'abord le calcul de l'ABV
-     */
     fun addDrinkToLogs(drink: Drink) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // 1. On attend la fin du calcul (important !)
                 val computedAbv = calculateGlobalAlcohol(drink)
                 val currentUserId = currentUser?.id ?: 0
 
-                // 2. Création du log avec les données fraîches
                 val log = DrinkLogs(
                     userId = currentUserId,
                     label = drink.name,
@@ -127,10 +112,8 @@ class CoktailViewModel(application: Application) : AndroidViewModel(application)
                     createdAt = Date()
                 )
 
-                // 3. Insertion en base
                 database.drinkLogsDao().insertDrinkLog(log)
 
-                // 4. Rafraîchir l'affichage
                 loadLogsByUserId()
 
             } catch (e: Exception) {
@@ -139,16 +122,13 @@ class CoktailViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    /**
-     * Charge les consommations de l'utilisateur
-     */
+
     fun loadLogsByUserId() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = database.drinkLogsDao().getLogsByUserId(userId)
                 withContext(Dispatchers.Main) {
                     userLogs = result
-                    // On recalcule le taux d'alcoolémie dès que les logs changent
                     calculateCurrentAlcoholLevel()
                 }
             } catch (e: Exception) {
@@ -157,15 +137,11 @@ class CoktailViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    /**
-     * Formule de Widmark pour l'alcoolémie actuelle
-     */
     fun calculateCurrentAlcoholLevel() {
         val currentTime = System.currentTimeMillis()
         val twelveHoursInMs = 12 * 60 * 60 * 1000
         val startTime = currentTime - twelveHoursInMs
 
-        // On ne garde que les consommations des 12 dernières heures
         val recentLogs = userLogs.filter { it.createdAt.time >= startTime }
 
         if (recentLogs.isEmpty()) {
@@ -175,7 +151,6 @@ class CoktailViewModel(application: Application) : AndroidViewModel(application)
 
         var totalAlcoholGrams = 0.0
         recentLogs.forEach { log ->
-            // Alcool pur (g) = Volume (ml) * (ABV/100) * 0.8 (densité éthanol)
             val grams = log.size * (log.abv.toDouble() / 100.0) * 0.8
             totalAlcoholGrams += grams
         }
@@ -183,13 +158,10 @@ class CoktailViewModel(application: Application) : AndroidViewModel(application)
         val weight = userWeight.toDouble()
         if (weight <= 0.0) return
 
-        // Coefficient de diffusion (Widmark)
         val k = if (userSex.contains("F", ignoreCase = true) || userSex.contains("Femme", ignoreCase = true)) 0.6 else 0.7
 
-        // Taux théorique sans élimination
         val rawAlcoholLevel = totalAlcoholGrams / (weight * k)
 
-        // Calcul de l'élimination (environ 0.15 g/L par heure)
         val firstLogTime = recentLogs.minByOrNull { it.createdAt.time }?.createdAt?.time ?: currentTime
         val hoursElapsed = (currentTime - firstLogTime).toDouble() / (1000 * 60 * 60)
         val elimination = hoursElapsed * 0.15

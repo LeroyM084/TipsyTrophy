@@ -44,16 +44,12 @@ data class Drink(
         return ingredients
     }
 
-    /**
-     * Tente de convertir une mesure (ex: "1 oz", "2 cl", "1/2 cup") en millilitres.
-     * C'est une estimation car les formats de l'API sont très variés.
-     */
+   
     fun parseMeasureToMl(measure: String): Double {
-        if (measure.isBlank()) return 30.0 // Valeur par défaut si vide (ex: 1 part)
+        if (measure.isBlank()) return 30.0
 
         val cleanMeasure = measure.lowercase()
         
-        // Extraction de la valeur numérique (gère les fractions comme 1/2)
         val numberPattern = Regex("""(\d+/?\d*\.?\d*)""").find(cleanMeasure)?.value
         val amount = if (numberPattern != null) {
             if (numberPattern.contains("/")) {
@@ -75,8 +71,8 @@ data class Drink(
             cleanMeasure.contains("cup") || cleanMeasure.contains("tasse") -> amount * 240.0
             cleanMeasure.contains("shot") -> amount * 44.0
             cleanMeasure.contains("dash") || cleanMeasure.contains("trait") -> amount * 1.0
-            cleanMeasure.contains("part") -> amount * 30.0 // On considère une part comme 3cl par défaut
-            else -> amount * 30.0 // Par défaut
+            cleanMeasure.contains("part") -> amount * 30.0 
+            else -> amount * 30.0 
         }
     }
 }

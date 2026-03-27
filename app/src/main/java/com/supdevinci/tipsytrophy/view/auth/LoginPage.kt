@@ -46,7 +46,6 @@ fun LoginPage(viewModel: LoginViewModel = viewModel(), navController: NavHostCon
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // --- SECTION LOGO ---
             Surface(
                 modifier = Modifier.size(140.dp),
                 shape = RoundedCornerShape(32.dp),
@@ -84,12 +83,11 @@ fun LoginPage(viewModel: LoginViewModel = viewModel(), navController: NavHostCon
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // --- FORMULAIRE ---
             OutlinedTextField(
                 value = username,
                 onValueChange = {
-                    username = it      // Première instruction
-                    isError = false    // Deuxième instruction
+                    username = it    
+                    isError = false    
                 },
                 label = { Text("Pseudo") },
                 placeholder = { Text("Ex: Jean_Dujardin") },
@@ -113,7 +111,6 @@ fun LoginPage(viewModel: LoginViewModel = viewModel(), navController: NavHostCon
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- BOUTON CONNEXION ---
             Button(
                 onClick = {
                     viewModel.loginUser(username) { success ->
@@ -152,7 +149,6 @@ fun LoginPage(viewModel: LoginViewModel = viewModel(), navController: NavHostCon
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- LIEN INSCRIPTION ---
             TextButton(
                 onClick = { navController.navigate("signup") },
                 modifier = Modifier.fillMaxWidth()

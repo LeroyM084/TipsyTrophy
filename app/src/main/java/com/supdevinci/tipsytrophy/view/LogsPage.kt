@@ -49,7 +49,6 @@ fun LogsPage(
                 .fillMaxSize()
                 .systemBarsPadding()
         ) {
-            // --- HEADER ---
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -87,7 +86,6 @@ fun LogsPage(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // --- BANNER TAUX D'ALCOOL ---
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     color = colorScheme.primary.copy(alpha = 0.12f),
@@ -105,7 +103,6 @@ fun LogsPage(
                 }
             }
 
-            // --- CONTENU ---
             if (logs.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),

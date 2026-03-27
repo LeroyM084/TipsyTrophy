@@ -34,7 +34,6 @@ fun CocktailNavHost(navController: NavHostController) {
         composable(Routes.SPLASH) {
             SplashScreen(navController = navController)
         }
-        // --- AUTHENTIFICATION ---)
         composable(Routes.LOGIN) {
             LoginPage(navController = navController)
         }
